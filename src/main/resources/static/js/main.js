@@ -15,8 +15,10 @@ Vue.component('message-form',{
             var message = {text : this.text};
 
             axios.post('/message',message).then(function(resultdata){
+
                messages.push(resultdata.data);
-            });
+               this.text = '';
+            }.bind(this));
         }
     }
 
@@ -41,7 +43,7 @@ Vue.component('message-list',{
         var messages = this.messages;
         axios.get('/message',{
         }).then(function(response){
-            response.data.forEach(function (resultdata){
+            response.data.forEach(function (resultdata) {
                 messages.push(resultdata);
             });
         });
