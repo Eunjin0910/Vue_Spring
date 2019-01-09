@@ -1,3 +1,42 @@
+Vue.component('time-stamp',{
+    data : function(){
+        return {
+            now_time : ''
+        }
+    },
+    template : '<div>현재 시각 : {{ now_time }}</div>',
+    created () {
+        var timeFormat = function(time){
+
+            var num = String(time);
+
+            if(num.length <  2){
+                num = '0' + num;
+            }
+            return num;
+        }
+
+        var returnTime = function(){
+            var currentData = new Date();
+            var ampm = 'AM';
+
+            var currentHours = timeFormat(currentData.getHours());
+            var currentMinute = timeFormat(currentData.getMinutes());
+            var currentSeconds = timeFormat(currentData.getSeconds());
+
+            if (currentHours >= 12){
+                ampm = 'PM'
+            }
+
+            this.now_time = ampm + '  ' + currentHours + ' : ' + currentMinute + ' : ' + currentSeconds
+            setTimeout(function(){
+                returnTime();
+            },1000);
+        }.bind(this);
+        returnTime();
+    }
+});
+
 Vue.component('message-form',{
     props : ['messages'],
     data: function(){
@@ -36,6 +75,7 @@ Vue.component('message-row', {
 Vue.component('message-list',{
     props: ['messages'],
     template: '<div>' +
+                    '<time-stamp />' +
                     '<message-form :messages="messages" />' +
                     '<message-row v-for="message in messages" :key="message.id" :message="message" />' +
               '</div>',
