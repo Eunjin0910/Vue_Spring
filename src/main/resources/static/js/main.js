@@ -38,7 +38,7 @@ Vue.component('time-stamp',{
 });
 
 Vue.component('message-form',{
-    props : ['messages'],
+    props : ['messages','receive'],
     data: function(){
       return {
           text: ''
@@ -59,25 +59,41 @@ Vue.component('message-form',{
                this.text = '';
             }.bind(this));
         }
+    },
+    updated: function(){
+        this.receive(this.text);
     }
 
 });
 
 
 Vue.component('message-row', {
-    props : ['message'],
+    props : ['message','send'],
     template : '<div>' +
                     '<i>({{ message.id }})</i> {{ message.text }}' +
-               '</div>'
+                    '<span>' +
+                        '<input type="button" value="Edit" @click="edit">' +
+                    '</span>' +
+               '</div>',
+    methods : {
+        edit : function (){
+            this.send(this.message.id);
+        }
+    }
 });
 
 
 Vue.component('message-list',{
     props: ['messages'],
+    data : function(){
+      return {
+          receive_message : null
+      }
+    },
     template: '<div>' +
                     '<time-stamp />' +
-                    '<message-form :messages="messages" />' +
-                    '<message-row v-for="message in messages" :key="message.id" :message="message" />' +
+                    '<message-form :messages="messages" :receive="receive" />' +
+                    '<message-row v-for="message in messages" :key="message.id" :message="message" :send="send" />' +
               '</div>',
     created: function() {
         var messages = this.messages;
@@ -87,6 +103,18 @@ Vue.component('message-list',{
                 messages.push(resultdata);
             });
         });
+    },
+    methods:{
+        receive: function(receive_message) {
+            this.receive_message = receive_message;
+        },
+        send : function(send_message) {
+            if (!(this.receive_message == null || this.receive_message == '')) {
+                axios.put('/message/' + send_message ,{
+                    text : this.receive_message
+                }).then
+            }
+        }
     }
 });
 
