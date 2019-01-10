@@ -1,10 +1,14 @@
 Vue.component('time-stamp',{
     data : function(){
         return {
-            now_time : ''
+            now_time : '',
+            ampm : '',
         }
     },
-    template : '<div>현재 시각 : {{ now_time }}</div>',
+    template : '<div style="color: #666;">' +
+                    '<span style="font-size: 30px; font-weight: bold;">{{ now_time }} </span>' +
+                    '<span style="font-weight: bold;">{{ ampm }}</span>' +
+               '</div>',
     created () {
         var timeFormat = function(time){
 
@@ -18,17 +22,17 @@ Vue.component('time-stamp',{
 
         var returnTime = function(){
             var currentData = new Date();
-            var ampm = 'AM';
+            this.ampm = 'AM';
 
             var currentHours = timeFormat(currentData.getHours());
             var currentMinute = timeFormat(currentData.getMinutes());
             var currentSeconds = timeFormat(currentData.getSeconds());
 
             if (currentHours >= 12){
-                ampm = 'PM'
+                this.ampm = 'PM'
             }
 
-            this.now_time = ampm + '  ' + currentHours + ' : ' + currentMinute + ' : ' + currentSeconds
+            this.now_time = currentHours + ' : ' + currentMinute + ' : ' + currentSeconds
             setTimeout(function(){
                 returnTime();
             },1000);
