@@ -1,5 +1,5 @@
 Vue.component('time-stamp',{
-    data : function(){
+    data : function (){
         return {
             now_time : '',
             ampm : '',
@@ -10,7 +10,7 @@ Vue.component('time-stamp',{
                     '<span style="font-weight: bold;">{{ ampm }}</span>' +
                '</div>',
     created () {
-        var timeFormat = function(time){
+        var timeFormat = function (time){
 
             var num = String(time);
 
@@ -20,7 +20,7 @@ Vue.component('time-stamp',{
             return num;
         }
 
-        var returnTime = function(){
+        var returnTime = function (){
             var currentData = new Date();
             this.ampm = 'AM';
 
@@ -33,7 +33,7 @@ Vue.component('time-stamp',{
             }
 
             this.now_time = currentHours + ' : ' + currentMinute + ' : ' + currentSeconds
-            setTimeout(function(){
+            setTimeout(function (){
                 returnTime();
             },1000);
         }.bind(this);
@@ -41,27 +41,56 @@ Vue.component('time-stamp',{
     }
 });
 
+function getIndex (list, id){
+    for (var i = 0 ; i < list.length ; i ++){
+        if (list[i].id == id){
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 Vue.component('message-form',{
-    props : ['messages'],
-    data: function(){
+    props : ['messages','messageAttr'],
+    data: function (){
       return {
-          text: ''
+          text: '',
+          id : ''
       }
     },
+    watch : {
+        messageAttr : function (newVal, oldVal){
+            this.text = newVal.text;
+            this.id = newVal.id;
+        }
+    },
     template:'<div>' +
-                '<input type="text" placeholder="Write someting" v-model="text">' +
+                '<input type="text" placeholder="Write someting" v-model="text" @keydown.enter="save">' +
                 '<input type="button" value="SAVE" @click="save">' +
              '</div>',
     methods: {
-        save: function(){
-            var messages = this.messages;
-            var message = {text : this.text};
+        save: function (){
+            if (this.text != null && this.text != ''){
+                var messages = this.messages;
+                var message = {text : this.text};
 
-            axios.post('/message',message).then(function(resultdata){
+                if (this.id){
+                    axios.put('/message/' + this.id, message).then(function (resultData){
+                        var index = getIndex(this.messages, this.id);
+                        messages.splice(index, 1, resultData.data);
 
-               messages.push(resultdata.data);
-               this.text = '';
-            }.bind(this));
+                        this.id = '';
+                        this.text = '';
+                    }.bind(this));
+                }else {
+                    axios.post('/message',message).then(function (resultData){
+
+                        messages.push(resultData.data);
+                        this.text = '';
+                    }.bind(this));
+                }
+            }
         }
     }
 
@@ -69,28 +98,56 @@ Vue.component('message-form',{
 
 
 Vue.component('message-row', {
-    props : ['message'],
+    props : ['message','editMessage','messages'],
     template : '<div>' +
                     '<i>({{ message.id }})</i> {{ message.text }}' +
-               '</div>'
+                    '<span  style="position: absolute; right: 0">' +
+                        '<input type="button" value="Edit" @click="edit">' +
+                        '<input type="button" value="Del" @click="del">' +
+                    '</span>' +
+               '</div>',
+    methods : {
+        edit : function (){
+            this.editMessage(this.message)
+        },
+        del : function (){
+            axios.delete('/message/' + this.message.id).then(function (resultData){
+                  if (resultData.status){
+                        this.messages.splice(this.messages.indexOf(this.message), 1)
+                  }
+            }.bind(this));
+        }
+    }
 });
 
 
 Vue.component('message-list',{
     props: ['messages'],
+    data : function (){
+        return {
+            message : null
+        }
+    },
     template: '<div>' +
-                    '<time-stamp />' +
-                    '<message-form :messages="messages" />' +
-                    '<message-row v-for="message in messages" :key="message.id" :message="message" />' +
-              '</div>',
-    created: function() {
+                      '<time-stamp />' +
+                      '<div style="position: relative; width: 300px;">' +
+                            '<message-form :messages="messages" :messageAttr="message" />' +
+                            '<message-row v-for="message in messages" :key="message.id" :message="message" :editMessage="editMessage" :messages="messages" />' +
+                      '</div>' +
+              '<div>',
+    created: function (){
         var messages = this.messages;
         axios.get('/message',{
-        }).then(function(response){
-            response.data.forEach(function (resultdata) {
-                messages.push(resultdata);
+        }).then(function (response){
+            response.data.forEach(function (resultData){
+                messages.push(resultData);
             });
         });
+    },
+    methods : {
+        editMessage : function (message){
+            this.message = message;
+        }
     }
 });
 

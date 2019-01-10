@@ -47,6 +47,9 @@ public class MessaggeController {
 
     @PutMapping("{id}")
     public Map<String,String> update(@PathVariable String id,@RequestBody Map<String,String> message) {
+
+        System.out.println("in update");
+
         Map<String, String> messageFromDB = getMessage(id);
 
         messageFromDB.putAll(message);
