@@ -18,18 +18,32 @@ spring:
             non_contextual_creation: true
         show_sql: true
 
-security:
-  oauth2:
-    client:
-      clientId: 415662828301-ugka79pmllkrr1o7bqojibb8hs3mvhp3.apps.googleusercontent.com
-      clientSecret: hF2KIcl5rWBqZeCZhXUQqHtI
-      accessTokenUri: htpp://www.googleapis.com/oauth2/v4/token
-      userAuthorizationUri: http://accounts.google.com/o/oauth2/v2/auth
-      clientAuthenticationScheme: form
-      scope: openid, email, profile
-    resource:
-      userInfoUri: https://www.googleapis.com/oauth2/v3/userinfo
-      preferTokenInfo: true
+#security:
+#  oauth2:
+#    client:
+#      clientId: 415662828301-ugka79pmllkrr1o7bqojibb8hs3mvhp3.apps.googleusercontent.com
+#      clientSecret: hF2KIcl5rWBqZeCZhXUQqHtI
+#      clientAuthenticationScheme: form
+#      accessTokenUri: htpp://www.googleapis.com/oauth2/v4/token
+#      userAuthorizationUri: http://accounts.google.com/o/oauth2/v2/auth
+#      scope: openid, email, profile
+#    resource:
+#      userInfoUri: https://www.googleapis.com/oauth2/v3/userinfo
+#      preferTokenInfo: true
+
+
+google :
+  client :
+    clientId : 415662828301-ugka79pmllkrr1o7bqojibb8hs3mvhp3.apps.googleusercontent.com
+    clientSecret: hF2KIcl5rWBqZeCZhXUQqHtI
+    accessTokenUri: https://www.googleapis.com/oauth2/v4/token
+    userAuthorizationUri: https://accounts.google.com/o/oauth2/v2/auth
+    clientAuthenticationScheme: form
+    scope:
+    - email
+    - profile
+  resource:
+    userInfoUri: https://www.googleapis.com/oauth2/v3/userinfo
 
 
 

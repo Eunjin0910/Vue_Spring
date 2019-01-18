@@ -1,54 +1,78 @@
 package letscode.Alvin.config;
 
-import letscode.Alvin.domain.User;
-import letscode.Alvin.repo.UserDetailRepo;
+import letscode.Alvin.resource.ClientResources;
 import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.PrincipalExtractor;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.UserInfoTokenServices;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.client.OAuth2ClientContext;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.security.oauth2.client.filter.OAuth2ClientAuthenticationProcessingFilter;
+import org.springframework.security.oauth2.client.filter.OAuth2ClientContextFilter;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.filter.CompositeFilter;
 
-import java.time.LocalDateTime;
+import javax.servlet.Filter;
+import java.util.ArrayList;
+import java.util.List;
 
-@Configuration
 @EnableWebSecurity
 @EnableOAuth2Sso
 public class WebSecurityconfig extends WebSecurityConfigurerAdapter {
+
+    private OAuth2ClientContext oauth2ClientContext;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        System.out.println("configure Control in");
-        http
-                .authorizeRequests()
-                .mvcMatchers("/").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .csrf().disable();
+        http.antMatcher("/**").authorizeRequests().antMatchers("/", "/login**").permitAll().anyRequest()
+                .authenticated().and().exceptionHandling()
+                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/")).and()
+                .addFilterBefore(ssoFilter(), BasicAuthenticationFilter.class);
+
+        // logout
+        http.logout()
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/")
+                .permitAll();
     }
 
     @Bean
-    public PrincipalExtractor principalExtractor(UserDetailRepo userDetailRepo){
-        System.out.println("principalExtractor Control in");
-        return map -> {
-            String id = (String) map.get("sub");
-            User user = userDetailRepo.findById(id).orElseGet(() -> {
-               User newUser = new User();
-               newUser.setId(id);
-               newUser.setName((String) map.get("name"));
-               newUser.setEmail((String) map.get("email"));
-               newUser.setGender((String) map.get("gender"));
-               newUser.setLocale((String) map.get("locale"));
-               newUser.setUserpic((String) map.get("picture"));
+    @ConfigurationProperties("google")
+    public ClientResources google() {
+        return new ClientResources();
+    }
 
-               return newUser;
-            });
+    @Bean
+    public FilterRegistrationBean oauth2ClientFilterRegistration(OAuth2ClientContextFilter filter) {
+        FilterRegistrationBean registration = new FilterRegistrationBean();
+        registration.setFilter(filter);
+        registration.setOrder(-100);
+        return registration;
+    }
 
-            user.setLastVisit(LocalDateTime.now());
+    private Filter ssoFilter() {
+        CompositeFilter filter = new CompositeFilter();
+        List<Filter> filters = new ArrayList<>();
+        filters.add(ssoFilter(google(), "/login/google")); //  이전에 등록했던 OAuth 리다이렉트 URL
+        filter.setFilters(filters);
+        return filter;
+    }
 
-            System.out.println(user.toString());
-
-            return userDetailRepo.save(user);
-        };
+    private Filter ssoFilter(ClientResources client, String path) {
+        OAuth2ClientAuthenticationProcessingFilter filter = new OAuth2ClientAuthenticationProcessingFilter(path);
+        OAuth2RestTemplate restTemplate = new OAuth2RestTemplate(client.getClient(), oauth2ClientContext);
+        filter.setRestTemplate(restTemplate);
+        UserInfoTokenServices tokenServices = new UserInfoTokenServices(client.getResource().getUserInfoUri(), client.getClient().getClientId());
+        tokenServices.setRestTemplate(restTemplate);
+        filter.setTokenServices(tokenServices);
+        return filter;
     }
 }
