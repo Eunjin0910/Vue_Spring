@@ -1,0 +1,35 @@
+server:
+  port: 30040
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost/dev_db?characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false
+    username: alvin
+    password: 1234
+  jpa:
+    generate-ddl: true
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        show_sql: true
+
+security:
+  oauth2:
+    client:
+      clientId: 415662828301-ugka79pmllkrr1o7bqojibb8hs3mvhp3.apps.googleusercontent.com
+      clientSecret: hF2KIcl5rWBqZeCZhXUQqHtI
+      accessTokenUri: htpp://www.googleapis.com/oauth2/v4/token
+      userAuthorizationUri: http://accounts.google.com/o/oauth2/v2/auth
+      clientAuthenticationScheme: form
+      scope: openid, email, profile
+    resource:
+      userInfoUri: https://www.googleapis.com/oauth2/v3/userinfo
+      preferTokenInfo: true
+
+
+
